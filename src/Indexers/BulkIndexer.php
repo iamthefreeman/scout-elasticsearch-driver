@@ -2,11 +2,11 @@
 
 namespace ScoutElastic\Indexers;
 
+use Illuminate\Database\Eloquent\Collection;
+use ScoutElastic\Facades\ElasticClient;
 use ScoutElastic\Migratable;
 use ScoutElastic\Payloads\RawPayload;
 use ScoutElastic\Payloads\TypePayload;
-use ScoutElastic\Facades\ElasticClient;
-use Illuminate\Database\Eloquent\Collection;
 
 class BulkIndexer implements IndexerInterface
 {
@@ -42,7 +42,7 @@ class BulkIndexer implements IndexerInterface
                 return true;
             }
 
-            $actionPayload = (new RawPayload())
+            $actionPayload = (new RawPayload)
                 ->set('index._id', $model->getScoutKey());
 
             $bulkPayload
@@ -63,11 +63,15 @@ class BulkIndexer implements IndexerInterface
         $bulkPayload = new TypePayload($model);
 
         $models->each(function ($model) use ($bulkPayload) {
-            $actionPayload = (new RawPayload())
+            $actionPayload = (new RawPayload)
                 ->set('delete._id', $model->getScoutKey());
 
             $bulkPayload->add('body', $actionPayload->get());
         });
+
+        if ($documentRefresh = config('scout_elastic.document_refresh')) {
+            $bulkPayload->set('refresh', $documentRefresh);
+        }
 
         $bulkPayload->set('client.ignore', 404);
 

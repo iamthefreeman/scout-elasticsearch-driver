@@ -2,9 +2,9 @@
 
 namespace ScoutElastic\Tests\Indexers;
 
-use ScoutElastic\Tests\Config;
-use ScoutElastic\Indexers\BulkIndexer;
 use ScoutElastic\Facades\ElasticClient;
+use ScoutElastic\Indexers\BulkIndexer;
+use ScoutElastic\Tests\Config;
 
 class BulkIndexerTest extends AbstractIndexerTest
 {
@@ -26,7 +26,7 @@ class BulkIndexerTest extends AbstractIndexerTest
                 ],
             ]);
 
-        (new BulkIndexer())
+        (new BulkIndexer)
             ->update($this->models);
 
         $this->addToAssertionCount(1);
@@ -52,7 +52,7 @@ class BulkIndexerTest extends AbstractIndexerTest
                 ],
             ]);
 
-        (new BulkIndexer())
+        (new BulkIndexer)
             ->update($this->models);
 
         $this->addToAssertionCount(1);
@@ -77,7 +77,7 @@ class BulkIndexerTest extends AbstractIndexerTest
                 ],
             ]);
 
-        (new BulkIndexer())
+        (new BulkIndexer)
             ->update($this->models);
 
         $this->addToAssertionCount(1);
@@ -96,6 +96,33 @@ class BulkIndexerTest extends AbstractIndexerTest
                     ['delete' => ['_id' => 2]],
                     ['delete' => ['_id' => 3]],
                 ],
+                'client' => [
+                    'ignore' => 404,
+                ],
+            ]);
+
+        (new BulkIndexer)
+            ->delete($this->models);
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function testDeleteWithSpecifiedDocumentRefreshOption()
+    {
+        Config::set('scout_elastic.document_refresh', true);
+
+        ElasticClient
+            ::shouldReceive('bulk')
+            ->once()
+            ->with([
+                'index' => 'test',
+                'type' => 'test',
+                'body' => [
+                    ['delete' => ['_id' => 1]],
+                    ['delete' => ['_id' => 2]],
+                    ['delete' => ['_id' => 3]],
+                ],
+                'refresh' => true,
                 'client' => [
                     'ignore' => 404,
                 ],

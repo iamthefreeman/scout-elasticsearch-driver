@@ -2,10 +2,10 @@
 
 namespace ScoutElastic\Indexers;
 
-use ScoutElastic\Migratable;
-use ScoutElastic\Facades\ElasticClient;
-use ScoutElastic\Payloads\DocumentPayload;
 use Illuminate\Database\Eloquent\Collection;
+use ScoutElastic\Facades\ElasticClient;
+use ScoutElastic\Migratable;
+use ScoutElastic\Payloads\DocumentPayload;
 
 class SingleIndexer implements IndexerInterface
 {
@@ -51,11 +51,15 @@ class SingleIndexer implements IndexerInterface
     public function delete(Collection $models)
     {
         $models->each(function ($model) {
-            $payload = (new DocumentPayload($model))
-                ->set('client.ignore', 404)
-                ->get();
+            $payload = new DocumentPayload($model);
 
-            ElasticClient::delete($payload);
+            if ($documentRefresh = config('scout_elastic.document_refresh')) {
+                $payload->set('refresh', $documentRefresh);
+            }
+
+            $payload->set('client.ignore', 404);
+
+            ElasticClient::delete($payload->get());
         });
     }
 }

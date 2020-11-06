@@ -4,9 +4,9 @@ namespace ScoutElastic;
 
 use Exception;
 use Illuminate\Support\Arr;
+use Laravel\Scout\Searchable as SourceSearchable;
 use ScoutElastic\Builders\FilterBuilder;
 use ScoutElastic\Builders\SearchBuilder;
-use Laravel\Scout\Searchable as SourceSearchable;
 
 trait Searchable
 {
@@ -31,8 +31,8 @@ trait Searchable
     {
         static $indexConfigurator;
 
-        if (!$indexConfigurator) {
-            if (!isset($this->indexConfigurator) || empty($this->indexConfigurator)) {
+        if (! $indexConfigurator) {
+            if (! isset($this->indexConfigurator) || empty($this->indexConfigurator)) {
                 throw new Exception(sprintf(
                     'An index configurator for the %s model is not specified.',
                     __CLASS__
@@ -76,15 +76,15 @@ trait Searchable
     /**
      * Execute the search.
      *
-     * @param string $query
-     * @param callable|null $callback
+     * @param  string  $query
+     * @param  callable|null  $callback
      * @return \ScoutElastic\Builders\FilterBuilder|\ScoutElastic\Builders\SearchBuilder
      */
     public static function search($query, $callback = null)
     {
         $softDelete = static::usesSoftDelete() && config('scout.soft_delete', false);
 
-        if ($query == '*') {
+        if ($query === '*') {
             return new FilterBuilder(new static, $callback, $softDelete);
         } else {
             return new SearchBuilder(new static, $query, $callback, $softDelete);
@@ -94,12 +94,12 @@ trait Searchable
     /**
      * Execute a raw search.
      *
-     * @param array $query
+     * @param  array  $query
      * @return array
      */
     public static function searchRaw(array $query)
     {
-        $model = new static();
+        $model = new static;
 
         return $model->searchableUsing()
             ->searchRaw($model, $query);
@@ -108,7 +108,7 @@ trait Searchable
     /**
      * Set the highlight attribute.
      *
-     * @param \ScoutElastic\Highlight $value
+     * @param  \ScoutElastic\Highlight  $value
      * @return void
      */
     public function setHighlightAttribute(Highlight $value)

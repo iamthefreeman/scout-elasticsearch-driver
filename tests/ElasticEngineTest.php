@@ -2,13 +2,14 @@
 
 namespace ScoutElastic\Tests;
 
-use stdClass;
-use ScoutElastic\ElasticEngine;
-use ScoutElastic\Facades\ElasticClient;
+use Illuminate\Database\Eloquent\Collection;
 use ScoutElastic\Builders\FilterBuilder;
 use ScoutElastic\Builders\SearchBuilder;
-use ScoutElastic\Tests\Stubs\SearchRule;
+use ScoutElastic\ElasticEngine;
+use ScoutElastic\Facades\ElasticClient;
 use ScoutElastic\Tests\Dependencies\Model;
+use ScoutElastic\Tests\Stubs\SearchRule;
+use stdClass;
 
 class ElasticEngineTest extends AbstractTestCase
 {
@@ -184,7 +185,7 @@ class ElasticEngineTest extends AbstractTestCase
                         'query' => [
                             'bool' => [
                                 'must' => [
-                                    'match_all' => new stdClass(),
+                                    'match_all' => new stdClass,
                                 ],
                                 'filter' => [
                                     'bool' => [
@@ -298,7 +299,7 @@ class ElasticEngineTest extends AbstractTestCase
             ],
         ];
 
-        $this->assertEquals(
+        $this->assertSame(
             [1, 2],
             $this->engine->mapIds($results)->all()
         );
@@ -366,7 +367,7 @@ class ElasticEngineTest extends AbstractTestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->assertEquals(
+        $this->assertSame(
             [$model],
             $this->engine->map($builder, $results, $model)->all()
         );
@@ -434,10 +435,86 @@ class ElasticEngineTest extends AbstractTestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->assertEquals(
+        $this->assertSame(
             [$model],
             $this->engine->map($builder, $results, $model)->all()
         );
+    }
+
+    public function testMapReturnDatabaseCollection()
+    {
+        $this->markTestSkipped();
+
+        $results = [
+            'hits' => [
+                'total' => 2,
+                'hits' => [
+                    [
+                        '_id' => 1,
+                        '_source' => [
+                            'title' => 'foo',
+                        ],
+                    ],
+                    [
+                        '_id' => 2,
+                        '_source' => [
+                            'title' => 'bar',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $model = $this->mockModel([
+            'key' => 2,
+            'methods' => [
+                'usesSoftDelete',
+                'newQuery',
+                'whereIn',
+                'get',
+                'keyBy',
+            ],
+        ]);
+
+        $model
+            ->method('usesSoftDelete')
+            ->willReturn(false);
+
+        $model
+            ->method('newQuery')
+            ->willReturn($model);
+
+        $model
+            ->method('whereIn')
+            ->willReturn($model);
+
+        $model
+            ->method('get')
+            ->willReturn($model);
+
+        // The mocked `newQuery` chain will return an array of a single model (ID: 2)
+        // When mapping `$results['hits']['hits']`, the first item (ID: 1) will return null in `Collection::map()`
+        // This will result in `Collection::toBase()` being called, converting to a `Support\Collection`
+        $model
+            ->method('keyBy')
+            ->willReturn([
+                2 => $model,
+            ]);
+
+        $builder = $this
+            ->getMockBuilder(FilterBuilder::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $collection = $this->engine->map($builder, $results, $model);
+
+        $this->assertSame(
+            [$model],
+            $collection->all()
+        );
+
+        // Assert that an `Eloquent\Database\Collection` is returned
+        $this->assertInstanceOf(Collection::class, $collection);
     }
 
     public function testGetTotalCount()
@@ -451,7 +528,7 @@ class ElasticEngineTest extends AbstractTestCase
             ],
         ];
 
-        $this->assertEquals(
+        $this->assertSame(
             100,
             $this->engine->getTotalCount($results)
         );

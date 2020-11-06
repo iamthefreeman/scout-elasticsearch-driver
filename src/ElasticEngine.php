@@ -2,17 +2,17 @@
 
 namespace ScoutElastic;
 
-use stdClass;
-use Laravel\Scout\Builder;
-use Illuminate\Support\Arr;
-use Laravel\Scout\Engines\Engine;
-use ScoutElastic\Payloads\TypePayload;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Artisan;
-use ScoutElastic\Facades\ElasticClient;
-use ScoutElastic\Builders\SearchBuilder;
-use ScoutElastic\Indexers\IndexerInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Artisan;
+use Laravel\Scout\Builder;
+use Laravel\Scout\Engines\Engine;
+use ScoutElastic\Builders\SearchBuilder;
+use ScoutElastic\Facades\ElasticClient;
+use ScoutElastic\Indexers\IndexerInterface;
+use ScoutElastic\Payloads\TypePayload;
+use stdClass;
 
 class ElasticEngine extends Engine
 {
@@ -40,8 +40,8 @@ class ElasticEngine extends Engine
     /**
      * ElasticEngine constructor.
      *
-     * @param \ScoutElastic\Indexers\IndexerInterface $indexer
-     * @param bool $updateMapping
+     * @param  \ScoutElastic\Indexers\IndexerInterface  $indexer
+     * @param  bool  $updateMapping
      * @return void
      */
     public function __construct(IndexerInterface $indexer, $updateMapping)
@@ -91,8 +91,8 @@ class ElasticEngine extends Engine
     /**
      * Build the payload collection.
      *
-     * @param \Laravel\Scout\Builder $builder
-     * @param array $options
+     * @param  \Laravel\Scout\Builder  $builder
+     * @param  array  $options
      * @return \Illuminate\Support\Collection
      */
     public function buildSearchQueryPayloadCollection(Builder $builder, array $options = [])
@@ -126,7 +126,7 @@ class ElasticEngine extends Engine
             }
         } else {
             $payload = (new TypePayload($builder->model))
-                ->setIfNotEmpty('body.query.bool.must.match_all', new stdClass());
+                ->setIfNotEmpty('body.query.bool.must.match_all', new stdClass);
 
             $payloadCollection->push($payload);
         }
@@ -138,6 +138,7 @@ class ElasticEngine extends Engine
                 ->setIfNotEmpty('body.sort', $builder->orders)
                 ->setIfNotEmpty('body.explain', $options['explain'] ?? null)
                 ->setIfNotEmpty('body.profile', $options['profile'] ?? null)
+                ->setIfNotEmpty('body.min_score', $builder->minScore)
                 ->setIfNotNull('body.from', $builder->offset)
                 ->setIfNotNull('body.size', $builder->limit);
 
@@ -159,8 +160,8 @@ class ElasticEngine extends Engine
     /**
      * Perform the search.
      *
-     * @param \Laravel\Scout\Builder $builder
-     * @param array $options
+     * @param  \Laravel\Scout\Builder  $builder
+     * @param  array  $options
      * @return array|mixed
      */
     protected function performSearch(Builder $builder, array $options = [])
@@ -214,7 +215,7 @@ class ElasticEngine extends Engine
     /**
      * Explain the search.
      *
-     * @param \Laravel\Scout\Builder $builder
+     * @param  \Laravel\Scout\Builder  $builder
      * @return array|mixed
      */
     public function explain(Builder $builder)
@@ -227,7 +228,7 @@ class ElasticEngine extends Engine
     /**
      * Profile the search.
      *
-     * @param \Laravel\Scout\Builder $builder
+     * @param  \Laravel\Scout\Builder  $builder
      * @return array|mixed
      */
     public function profile(Builder $builder)
@@ -240,7 +241,7 @@ class ElasticEngine extends Engine
     /**
      * Return the number of documents found.
      *
-     * @param \Laravel\Scout\Builder $builder
+     * @param  \Laravel\Scout\Builder  $builder
      * @return int
      */
     public function count(Builder $builder)
@@ -265,8 +266,8 @@ class ElasticEngine extends Engine
     /**
      * Make a raw search.
      *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     * @param array $query
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @param  array  $query
      * @return mixed
      */
     public function searchRaw(Model $model, $query)
@@ -291,7 +292,7 @@ class ElasticEngine extends Engine
      */
     public function map(Builder $builder, $results, $model)
     {
-        if ($this->getTotalCount($results) == 0) {
+        if ($this->getTotalCount($results) === 0) {
             return Collection::make();
         }
 
@@ -311,10 +312,13 @@ class ElasticEngine extends Engine
 
         $models = $query
             ->whereIn($scoutKeyName, $ids)
+            ->when($builder->queryCallback, function ($query, $callback) {
+                return $callback($query);
+            })
             ->get($columns)
             ->keyBy($scoutKeyName);
 
-        return Collection::make($results['hits']['hits'])
+        $values = Collection::make($results['hits']['hits'])
             ->map(function ($hit) use ($models) {
                 $id = $hit['_id'];
 
@@ -325,11 +329,18 @@ class ElasticEngine extends Engine
                         $model->highlight = new Highlight($hit['highlight']);
                     }
 
+                    //add sort information to results for use
+                    if (isset($hit['sort'])) {
+                        $model->sortPayload = $hit['sort'];
+                    }
+
                     return $model;
                 }
             })
             ->filter()
             ->values();
+
+        return $values instanceof Collection ? $values : Collection::make($values);
     }
 
     /**
@@ -337,7 +348,7 @@ class ElasticEngine extends Engine
      */
     public function getTotalCount($results)
     {
-        return $results['hits']['total']['value'];
+        return $results['hits']['total']['value'] ?? 0;
     }
 
     /**

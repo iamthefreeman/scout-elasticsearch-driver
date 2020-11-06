@@ -9,10 +9,10 @@ class RawPayloadTest extends AbstractTestCase
 {
     public function testSet()
     {
-        $payload = (new RawPayload())
+        $payload = (new RawPayload)
             ->set('foo.bar', 10);
 
-        $this->assertEquals(
+        $this->assertSame(
             ['foo' => ['bar' => 10]],
             $payload->get()
         );
@@ -20,7 +20,7 @@ class RawPayloadTest extends AbstractTestCase
 
     public function testSetIfNotEmpty()
     {
-        $payload = (new RawPayload())
+        $payload = (new RawPayload)
             ->setIfNotEmpty('null', null)
             ->setIfNotEmpty('false', false)
             ->setIfNotEmpty('zero', 0)
@@ -28,7 +28,7 @@ class RawPayloadTest extends AbstractTestCase
             ->setIfNotEmpty('empty_string', '')
             ->setIfNotEmpty('foo', 'bar');
 
-        $this->assertEquals(
+        $this->assertSame(
             ['foo' => 'bar'],
             $payload->get()
         );
@@ -36,7 +36,7 @@ class RawPayloadTest extends AbstractTestCase
 
     public function testSetIfNotNull()
     {
-        $payload = (new RawPayload())
+        $payload = (new RawPayload)
             ->setIfNotNull('null', null)
             ->setIfNotNull('false', false)
             ->setIfNotNull('zero', 0)
@@ -44,7 +44,7 @@ class RawPayloadTest extends AbstractTestCase
             ->setIfNotNull('empty_string', '')
             ->setIfNotNull('foo', 'bar');
 
-        $this->assertEquals(
+        $this->assertSame(
             [
                 'false' => false,
                 'zero' => 0,
@@ -58,7 +58,7 @@ class RawPayloadTest extends AbstractTestCase
 
     public function testHas()
     {
-        $payload = (new RawPayload())
+        $payload = (new RawPayload)
             ->set('foo.bar', 100);
 
         $this->assertTrue($payload->has('foo'));
@@ -68,11 +68,11 @@ class RawPayloadTest extends AbstractTestCase
 
     public function testAdd()
     {
-        $payload = (new RawPayload())
+        $payload = (new RawPayload)
             ->set('foo', 0)
             ->add('foo', 1);
 
-        $this->assertEquals(
+        $this->assertSame(
             ['foo' => [0, 1]],
             $payload->get()
         );
@@ -80,11 +80,11 @@ class RawPayloadTest extends AbstractTestCase
 
     public function testAddIfNotEmpty()
     {
-        $payload = (new RawPayload())
+        $payload = (new RawPayload)
             ->addIfNotEmpty('foo', 0)
             ->addIfNotEmpty('foo', 1);
 
-        $this->assertEquals(
+        $this->assertSame(
             ['foo' => [1]],
             $payload->get()
         );
@@ -92,20 +92,20 @@ class RawPayloadTest extends AbstractTestCase
 
     public function testGet()
     {
-        $payload = (new RawPayload())
+        $payload = (new RawPayload)
             ->set('foo.bar', 0);
 
-        $this->assertEquals(
+        $this->assertSame(
             ['bar' => 0],
             $payload->get('foo')
         );
 
-        $this->assertEquals(
+        $this->assertSame(
             ['foo' => ['bar' => 0]],
             $payload->get()
         );
 
-        $this->assertEquals(
+        $this->assertSame(
             ['value' => 1],
             $payload->get('default', ['value' => 1])
         );

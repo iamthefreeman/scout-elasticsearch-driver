@@ -2,8 +2,8 @@
 
 namespace ScoutElastic\Console;
 
-use Symfony\Component\Console\Input\InputOption;
 use Illuminate\Foundation\Console\ModelMakeCommand;
+use Symfony\Component\Console\Input\InputOption;
 
 class SearchableModelMakeCommand extends ModelMakeCommand
 {
@@ -36,14 +36,14 @@ class SearchableModelMakeCommand extends ModelMakeCommand
             'index-configurator',
             'i',
             InputOption::VALUE_REQUIRED,
-            "Specify the index configurator for the model. It'll be created if doesn't exist.",
+            'Specify the index configurator for the model. It\'ll be created if doesn\'t exist.',
         ];
 
         $options[] = [
             'search-rule',
-            'sr',
+            null,
             InputOption::VALUE_REQUIRED,
-            "Specify the search rule for the model. It'll be created if doesn't exist.",
+            'Specify the search rule for the model. It\'ll be created if doesn\'t exist.',
         ];
 
         return $options;
@@ -72,7 +72,7 @@ class SearchableModelMakeCommand extends ModelMakeCommand
     /**
      * Build the class.
      *
-     * @param string $name
+     * @param  string  $name
      * @return string
      */
     protected function buildClass($name)

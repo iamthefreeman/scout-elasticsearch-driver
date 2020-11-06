@@ -3,8 +3,8 @@
 namespace ScoutElastic\Payloads;
 
 use Exception;
-use ScoutElastic\Searchable;
 use Illuminate\Database\Eloquent\Model;
+use ScoutElastic\Searchable;
 
 class TypePayload extends IndexPayload
 {
@@ -18,7 +18,7 @@ class TypePayload extends IndexPayload
     /**
      * TypePayload constructor.
      *
-     * @param \Illuminate\Database\Eloquent\Model $model
+     * @param  \Illuminate\Database\Eloquent\Model  $model
      * @throws \Exception
      * @return void
      */
